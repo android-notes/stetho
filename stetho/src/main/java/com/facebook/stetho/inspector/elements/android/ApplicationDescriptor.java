@@ -25,7 +25,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-final class ApplicationDescriptor extends AbstractChainedDescriptor<Application> {
+public final class ApplicationDescriptor extends AbstractChainedDescriptor<Application> {
   private final Map<Application, ElementContext> mElementToContextMap =
       Collections.synchronizedMap(new IdentityHashMap<Application, ElementContext>());
 
@@ -76,7 +76,7 @@ final class ApplicationDescriptor extends AbstractChainedDescriptor<Application>
     }
   }
 
-  private static boolean isDecorViewOfActivity(View view, List<WeakReference<Activity>> references) {
+  public static boolean isDecorViewOfActivity(View view, List<WeakReference<Activity>> references) {
     Util.throwIfNull(references);
     for (WeakReference<Activity> reference : references) {
       Activity activity = reference.get();

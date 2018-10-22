@@ -10,22 +10,32 @@
 package com.facebook.stetho.inspector.screencast;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.IBinder;
 import android.os.Looper;
 import android.util.Base64;
 import android.util.Base64OutputStream;
 import android.view.View;
+import android.view.WindowManager;
+
 import com.facebook.stetho.common.LogUtil;
 import com.facebook.stetho.inspector.elements.android.ActivityTracker;
+import com.facebook.stetho.inspector.elements.android.ApplicationDescriptor;
+import com.facebook.stetho.inspector.elements.android.window.WindowRootViewCompat;
 import com.facebook.stetho.inspector.jsonrpc.JsonRpcPeer;
 import com.facebook.stetho.inspector.protocol.module.Page;
 
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Field;
+import java.util.List;
+
+import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 
 public final class ScreencastDispatcher {
   private static final long FRAME_DELAY = 200l;
@@ -47,7 +57,7 @@ public final class ScreencastDispatcher {
   private ByteArrayOutputStream mStream;
   private Page.ScreencastFrameEvent mEvent = new Page.ScreencastFrameEvent();
   private Page.ScreencastFrameEventMetadata mMetadata = new Page.ScreencastFrameEventMetadata();
-
+  private int[]mLocation = new int[2];
   public ScreencastDispatcher() {
   }
 
@@ -102,9 +112,46 @@ public final class ScreencastDispatcher {
           mCanvas.setMatrix(matrix);
         }
         rootView.draw(mCanvas);
+        drawWindowIfNeeded(mCanvas, rootView.getContext(), activity);
       } catch (OutOfMemoryError e) {
         LogUtil.w("Out of memory trying to allocate screencast Bitmap.");
       }
+    }
+  }
+
+  private void drawWindowIfNeeded(Canvas canvas, Context context, Activity curActivity) {
+    List<View> windows = WindowRootViewCompat.get(context).getRootViews();
+    IBinder binder = null;
+    ActivityTracker tracker = ActivityTracker.get();
+    for (View view : windows) {
+      if (ApplicationDescriptor.isDecorViewOfActivity(view, tracker.getActivitiesView())) {
+        continue;
+      }
+      WindowManager.LayoutParams param = (WindowManager.LayoutParams) view.getLayoutParams();
+      if (param.type == TYPE_APPLICATION) {
+        if (binder == null){
+          try {
+            Field field = Activity.class.getDeclaredField("mToken");
+            field.setAccessible(true);
+            binder = (IBinder) field.get(curActivity);
+          } catch (Exception e){
+            e.printStackTrace();
+          }
+        }
+        //cur window belong to another Activity
+        if (param.token != binder){
+          continue;
+        }
+      }
+      //multi window may be cause display problem
+      if (view.getVisibility() != View.VISIBLE){
+        continue;
+      }
+      view.getLocationOnScreen(mLocation);
+      canvas.save();
+      canvas.translate(mLocation[0], mLocation[1]);
+      view.draw(canvas);
+      canvas.restore();
     }
   }
 
