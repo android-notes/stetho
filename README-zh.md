@@ -7,6 +7,10 @@
 
 ![gif](https://github.com/android-notes/stetho/blob/sequel/stetho.gif?raw=true)
 
+
+![gif](https://github.com/android-notes/stetho/blob/sequel/stetho2.gif?raw=true)
+
+
 ## 使用
  
  
