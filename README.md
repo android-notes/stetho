@@ -7,6 +7,9 @@ like dialog,popupwindow,toast etc
 
 ![gif](https://github.com/android-notes/stetho/blob/sequel/stetho.gif?raw=true)
 
+
+![gif](https://github.com/android-notes/stetho/blob/sequel/stetho2.gif?raw=true)
+
 ## Set-up
 
 ### Download
